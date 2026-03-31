@@ -67,6 +67,13 @@ body { font-family:var(--font); color:var(--dark); background:var(--bg); line-he
 .j-node.proposed .j-num { background:var(--green); }
 .j-node.proposed.has-arrow-right::after { color:var(--green); opacity:0.5; }
 
+.j-node.rest { background:var(--grey-50); border:1.5px dashed var(--grey-300); opacity:0.75; }
+.j-node.rest .j-num { background:var(--grey-400); }
+.j-node.rest .j-name { color:var(--grey-500); }
+.j-node.rest .j-trigger { color:var(--grey-400); }
+.j-node.rest:hover { opacity:1; }
+.j-node.rest.has-arrow-right::after { color:var(--grey-300); opacity:0.4; }
+
 /* Arrows */
 .j-node.has-arrow-right::after {
   content:'→'; position:absolute; right:-12px; top:50%; transform:translateY(-50%);
@@ -1167,20 +1174,38 @@ We're here to answer your questions and help you get started.</div>
         <div class="j-name">The Money Hook</div>
         <div class="j-trigger">Day 0 · Curiosity</div>
       </div>
+      <div class="j-node rest has-arrow-right">
+        <div class="j-tooltip tip-bottom">Day 1 — Intentional rest day. Let E1's money hook sit with the reader. No email. The reader processes the earning potential without feeling pressured.</div>
+        <div class="j-num">D1</div>
+        <div class="j-name">Rest Day</div>
+        <div class="j-trigger">Let it sink in</div>
+      </div>
       <div class="j-node proposed has-arrow-right">
         <div class="j-tooltip tip-bottom">E2 — Day 2: Social Proof. Subject: "They started just like you — now they earn daily." Earning scenarios, anonymised IB profiles, TMGM differentiators (daily payouts, PAMM/MAM). CTA: "Start Your IB Application"</div>
         <div class="j-num">E2</div>
         <div class="j-name">Social Proof</div>
         <div class="j-trigger">Day 2 · Trust</div>
       </div>
-      <div class="j-node proposed">
-        <div class="j-tooltip tip-bottom">E3 — Day 4: Objection Handling. Subject: "Think it's complicated? Here's what it actually takes." Address top 3 objections: time, network size, promotion skills. CTA: "Apply in 2 Minutes"</div>
+      <div class="j-node rest">
+        <div class="j-tooltip tip-bottom">Day 3 — Intentional rest day. The reader has seen the money (E1) and the proof (E2). Give them space to consider before addressing objections.</div>
+        <div class="j-num">D3</div>
+        <div class="j-name">Rest Day</div>
+        <div class="j-trigger">Build anticipation</div>
+      </div>
+    </div>
+    <div class="journey-row">
+      <div class="j-node proposed has-arrow-right">
+        <div class="j-tooltip">E3 — Day 4: Objection Handling. Subject: "Think it's complicated? Here's what it actually takes." Address top 3 objections: time, network size, promotion skills. CTA: "Apply in 2 Minutes"</div>
         <div class="j-num">E3</div>
         <div class="j-name">Objection Handling</div>
         <div class="j-trigger">Day 4 · Confidence</div>
       </div>
-    </div>
-    <div class="journey-row">
+      <div class="j-node rest has-arrow-right">
+        <div class="j-tooltip">Day 5 — Intentional rest day. Last breather before the urgency one-two punch (E4 on Day 6, E5 on Day 7). Creates contrast — silence before the close.</div>
+        <div class="j-num">D5</div>
+        <div class="j-name">Rest Day</div>
+        <div class="j-trigger">Calm before close</div>
+      </div>
       <div class="j-node proposed has-arrow-right">
         <div class="j-tooltip">E4 — Day 6: Urgency. Subject: "Your enhanced rate expires in 5 days." Limited-time onboarding incentive or opportunity cost framing. CTA: "Lock In Your Rate" or "Start Earning Today"</div>
         <div class="j-num">E4</div>
@@ -1193,7 +1218,6 @@ We're here to answer your questions and help you get started.</div>
         <div class="j-name">Final Close</div>
         <div class="j-trigger">Day 7 · Decision</div>
       </div>
-      <div class="j-node" style="border:none;background:transparent;cursor:default;pointer-events:none;"></div>
     </div>
   </div>
 </div>
