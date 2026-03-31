@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retail-to-IB EDM Journey — Audit & Revamp | TMGM 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAFBFC; --white: #FFFFFF; --dark: #111827; --grey-900: #1F2937;
+  --grey-700: #374151; --grey-600: #4B5563; --grey-500: #6B7280;
+  --grey-400: #9CA3AF; --grey-300: #D1D5DB; --grey-200: #E5E7EB;
+  --grey-100: #F3F4F6; --grey-50: #F9FAFB;
+  --blue: #3B82F6; --blue-light: #EFF6FF; --blue-dark: #1E40AF;
+  --purple: #8B5CF6; --purple-light: #F5F3FF;
+  --green: #10B981; --green-light: #ECFDF5;
+  --amber: #F59E0B; --amber-light: #FFFBEB;
+  --red: #EF4444; --red-light: #FEF2F2;
+  --font: 'Inter', -apple-system, system-ui, sans-serif;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.06), 0 4px 6px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-lg: 16px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:var(--font); color:var(--dark); background:var(--bg); line-height:1.6; -webkit-font-smoothing:antialiased; }
+
+/* HEADER */
+.header { background:var(--white); border-bottom:1px solid var(--grey-200); padding:24px 40px; position:sticky; top:0; z-index:100; }
+.header-inner { max-width:1200px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; }
+.header-left h1 { font-size:18px; font-weight:800; color:var(--dark); letter-spacing:-0.3px; }
+.header-left p { font-size:12px; color:var(--grey-500); margin-top:2px; }
+.header-right { display:flex; gap:8px; }
+.header-badge { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-current { background:var(--red-light); color:var(--red); }
+.badge-revamp { background:var(--green-light); color:var(--green); }
+.badge-finding { background:var(--amber-light); color:var(--amber); }
+
+/* MAIN */
+.main { max-width:1200px; margin:0 auto; padding:32px 40px 80px; }
+
+/* JOURNEY FLOW */
+.journey { margin-bottom:40px; padding:28px 32px; background:var(--white); border-radius:var(--radius-lg); border:1px solid var(--grey-200); box-shadow:var(--shadow-sm); }
+.journey-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--grey-400); margin-bottom:16px; }
+.journey-flow { display:flex; flex-direction:column; gap:14px; position:relative; }
+.journey-row { display:flex; gap:14px; align-items:stretch; position:relative; z-index:1; }
+.journey-row:hover { z-index:10; }
+.journey-row .j-node { flex:1; }
+.j-node { padding:16px 14px; border-radius:10px; text-align:center; cursor:default; transition:all 0.25s ease; position:relative; }
+.j-node:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+.j-node .j-num { font-size:10px; font-weight:800; color:var(--white); width:20px; height:20px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:6px; }
+.j-node .j-name { font-size:13px; font-weight:700; color:var(--dark); line-height:1.3; }
+.j-node .j-trigger { font-size:11px; color:var(--grey-500); margin-top:3px; }
+
+.j-node.active { background:var(--blue-light); border:1.5px solid rgba(59,130,246,0.2); }
+.j-node.active .j-num { background:var(--blue); }
+
+.j-node.missing { background:var(--red-light); border:1.5px dashed var(--red); opacity:0.7; }
+.j-node.missing .j-num { background:var(--red); }
+.j-node.missing .j-name { color:var(--red); }
+.j-node.missing .j-trigger { color:var(--red); opacity:0.7; }
+.j-node.missing:hover { opacity:1; }
+
+/* Arrows */
+.j-node.has-arrow-right::after {
+  content:'→'; position:absolute; right:-12px; top:50%; transform:translateY(-50%);
+  font-size:14px; color:var(--grey-300); font-weight:700; z-index:2;
+}
+.j-node.active.has-arrow-right::after { color:var(--blue); opacity:0.5; }
+.j-node.missing.has-arrow-right::after { color:var(--red); opacity:0.3; }
+
+/* Tooltips */
+.j-node .j-tooltip {
+  position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%);
+  background:var(--grey-900); color:var(--white); font-size:12px; font-weight:500;
+  line-height:1.5; padding:10px 14px; border-radius:8px; white-space:normal;
+  width:220px; text-align:left; opacity:0; visibility:hidden;
+  transition:opacity 0.2s, visibility 0.2s; pointer-events:none; z-index:50;
+  box-shadow:var(--shadow-lg);
+}
+.j-node .j-tooltip::after {
+  content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+  border:6px solid transparent; border-top-color:var(--grey-900);
+}
+.j-node:hover .j-tooltip { opacity:1; visibility:visible; }
+.j-node .j-tooltip.tip-bottom {
+  bottom:auto; top:calc(100% + 10px);
+}
+.j-node .j-tooltip.tip-bottom::after {
+  top:auto; bottom:100%; border-top-color:transparent; border-bottom-color:var(--grey-900);
+}
+
+/* EMAIL CARD */
+.email-card { background:var(--white); border-radius:var(--radius-lg); border:1px solid var(--grey-200); box-shadow:var(--shadow-sm); margin-bottom:24px; overflow:hidden; transition:box-shadow 0.2s; scroll-margin-top:80px; }
+.email-card:hover { box-shadow:var(--shadow-md); }
+
+.email-header { padding:20px 28px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid transparent; cursor:pointer; user-select:none; transition:border-color 0.2s; }
+.email-card.expanded .email-header { border-bottom-color:var(--grey-100); }
+.email-header-left { display:flex; align-items:center; gap:12px; }
+.email-toggle { width:28px; height:28px; border-radius:6px; background:var(--grey-100); display:flex; align-items:center; justify-content:center; color:var(--grey-500); font-size:12px; transition:all 0.3s; flex-shrink:0; }
+.email-card.expanded .email-toggle { background:#CC1042; color:var(--white); }
+.email-card.expanded .email-toggle svg { transform:rotate(180deg); }
+.email-card .email-collapsible { max-height:0; overflow:hidden; transition:max-height 0.4s ease; }
+.email-card.expanded .email-collapsible { max-height:5000px; }
+
+.expand-hint { font-size:11px; color:var(--grey-400); margin-left:8px; font-weight:500; font-style:italic; transition:opacity 0.3s; }
+.email-card.expanded .expand-hint { opacity:0; pointer-events:none; }
+
+.email-num { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:var(--white); }
+.email-num.current { background:var(--blue); }
+.email-meta h2 { font-size:15px; font-weight:700; color:var(--dark); }
+.email-meta .trigger { font-size:12px; color:var(--grey-500); }
+.type-badge { padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; }
+
+/* EMAIL BODY */
+.email-body { padding:24px 28px; }
+.field { margin-bottom:16px; }
+.field-row { display:flex; align-items:flex-start; gap:12px; }
+.field-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--grey-400); min-width:110px; padding-top:4px; flex-shrink:0; }
+.field-value { font-size:14px; color:var(--dark); line-height:1.6; flex:1; word-break:break-word; }
+.field-value.subject { font-weight:700; font-size:15px; }
+
+/* EMAIL PREVIEW */
+.email-preview { background:var(--grey-50); border:1px solid var(--grey-200); border-radius:var(--radius); padding:24px 28px; margin:16px 0; }
+.email-preview .banner { font-size:18px; font-weight:800; color:var(--dark); margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--grey-200); }
+.email-preview .salutation { font-size:14px; color:var(--grey-600); margin-bottom:12px; }
+.email-preview .content-block { font-size:14px; color:var(--grey-700); line-height:1.7; margin-bottom:16px; white-space:pre-line; }
+.email-preview .cta-block { display:inline-block; padding:10px 24px; background:var(--blue); color:var(--white); border-radius:8px; font-size:13px; font-weight:700; text-decoration:none; margin:8px 0; }
+
+/* COPY ALL / ACTIONS */
+.copy-all { display:flex; justify-content:flex-start; padding:0; border-top:1px solid var(--grey-100); }
+.copy-all-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:14px 16px; flex:1; font-size:12px; font-weight:600; color:var(--grey-600); background:var(--grey-50); border:none; border-right:1px solid var(--grey-200); cursor:pointer; transition:all 0.2s; font-family:var(--font); text-decoration:none; }
+.copy-all-btn:last-child { border-right:none; }
+.copy-all-btn:hover { background:var(--grey-100); color:var(--dark); }
+
+/* FINDINGS CARD */
+.findings-card { background:var(--white); border-radius:var(--radius-lg); border:1px solid var(--grey-200); box-shadow:var(--shadow-sm); margin-bottom:32px; overflow:hidden; }
+.findings-header { padding:20px 28px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; border-bottom:1px solid transparent; transition:border-color 0.2s; }
+.findings-card.expanded .findings-header { border-bottom-color:var(--grey-100); }
+.findings-body { max-height:0; overflow:hidden; transition:max-height 0.4s ease; }
+.findings-card.expanded .findings-body { max-height:12000px; }
+.findings-card.expanded .email-toggle { background:#CC1042; color:white; }
+.findings-card.expanded .email-toggle svg { transform:rotate(180deg); }
+.findings-card.expanded .expand-hint { opacity:0; pointer-events:none; }
+
+/* FINDINGS TABS — same pattern as lang-tabs */
+.findings-tabs { display:flex; gap:0; border-bottom:1px solid var(--grey-200); background:var(--grey-50); }
+.findings-tab { flex:1; padding:10px 12px; font-size:11.5px; font-weight:600; color:var(--grey-500); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; background:transparent; border-top:none; border-left:none; border-right:none; font-family:var(--font); text-align:center; }
+.findings-tab.active { color:var(--blue); border-bottom-color:var(--blue); background:var(--white); }
+.findings-tab:hover { color:var(--dark); }
+.findings-content { display:none; }
+.findings-content.active { display:block; }
+
+/* FINDINGS ITEMS */
+.findings-section { padding:24px 28px 0; }
+.findings-grid { display:grid; gap:12px; }
+.findings-grid-2 { grid-template-columns:1fr 1fr; }
+.findings-grid-3 { grid-template-columns:1fr 1fr 1fr; }
+
+.findings-item { border-radius:12px; padding:0; overflow:hidden; background:var(--white); border:1px solid var(--grey-200); transition:box-shadow 0.2s; }
+.findings-item:hover { box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+.findings-item-top { padding:14px 18px; display:flex; align-items:center; gap:10px; }
+.findings-icon { width:28px; height:28px; border-radius:50%; color:white; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.findings-item-name { font-size:13px; font-weight:700; color:var(--dark); }
+.findings-item-body { padding:0 18px 14px; }
+.findings-item-text { font-size:12.5px; color:var(--grey-600); line-height:1.6; }
+.findings-item-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.findings-tag { font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px; }
+.findings-tag.high { background:var(--red-light); color:var(--red); }
+.findings-tag.medium { background:var(--amber-light); color:var(--amber); }
+.findings-tag.low { background:var(--blue-light); color:var(--blue); }
+
+.findings-summary { margin:20px 28px 24px; padding:16px 20px; border-radius:10px; background:linear-gradient(135deg,#fef2f2,#fff5f5); border:1px solid rgba(239,68,68,0.15); }
+.findings-summary-title { font-size:12px; font-weight:700; color:var(--dark); margin-bottom:10px; }
+.findings-summary-text { font-size:12.5px; color:var(--grey-600); line-height:1.7; }
+
+/* REVAMP PROPOSAL — OUTER CARD */
+.revamp-card { background:var(--white); border-radius:var(--radius-lg); border:1px solid var(--grey-200); box-shadow:var(--shadow-sm); margin-bottom:32px; overflow:hidden; }
+.revamp-header { padding:20px 28px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; border-bottom:1px solid transparent; transition:border-color 0.2s; }
+.revamp-card.expanded .revamp-header { border-bottom-color:var(--grey-100); }
+.revamp-body { max-height:0; overflow:hidden; transition:max-height 0.5s ease; }
+.revamp-card.expanded .revamp-body { max-height:80000px; }
+.revamp-card.expanded .email-toggle { background:#CC1042; color:white; }
+.revamp-card.expanded .email-toggle svg { transform:rotate(180deg); }
+.revamp-card.expanded .expand-hint { opacity:0; pointer-events:none; }
+
+/* REVAMP — INNER CARDS */
+.revamp-inner { margin:16px 28px; border-radius:12px; border:1px solid var(--grey-200); overflow:hidden; transition:box-shadow 0.2s; }
+.revamp-inner:hover { box-shadow:var(--shadow); }
+.revamp-inner:last-of-type { margin-bottom:24px; }
+.revamp-inner-header { padding:16px 20px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; background:var(--grey-50); border-bottom:1px solid transparent; transition:all 0.2s; }
+.revamp-inner.expanded .revamp-inner-header { border-bottom-color:var(--grey-200); background:var(--white); }
+.revamp-inner-header-left { display:flex; align-items:center; gap:10px; }
+.revamp-inner-num { width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:var(--white); background:var(--green); flex-shrink:0; }
+.revamp-inner-title { font-size:14px; font-weight:700; color:var(--dark); }
+.revamp-inner-toggle { width:24px; height:24px; border-radius:6px; background:var(--grey-100); display:flex; align-items:center; justify-content:center; color:var(--grey-500); transition:all 0.3s; flex-shrink:0; }
+.revamp-inner.expanded .revamp-inner-toggle { background:var(--green); color:var(--white); }
+.revamp-inner.expanded .revamp-inner-toggle svg { transform:rotate(180deg); }
+.revamp-inner-body { max-height:0; overflow:hidden; transition:max-height 0.4s ease; }
+.revamp-inner.expanded .revamp-inner-body { max-height:15000px; }
+.revamp-inner-content { padding:20px 24px; }
+
+/* REVAMP — CONTENT ELEMENTS */
+.revamp-text { font-size:13.5px; color:var(--grey-700); line-height:1.7; margin-bottom:16px; }
+.revamp-text:last-child { margin-bottom:0; }
+.revamp-text strong { color:var(--dark); }
+.revamp-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--grey-400); margin-bottom:8px; }
+.revamp-compare { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.revamp-compare-box { padding:14px 18px; border-radius:10px; }
+.revamp-compare-box.old { background:var(--red-light); border:1px solid rgba(239,68,68,0.15); }
+.revamp-compare-box.new { background:var(--green-light); border:1px solid rgba(16,185,129,0.15); }
+.revamp-compare-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+.revamp-compare-box.old .revamp-compare-title { color:var(--red); }
+.revamp-compare-box.new .revamp-compare-title { color:var(--green); }
+.revamp-compare-text { font-size:13px; color:var(--grey-700); line-height:1.6; }
+
+.revamp-table { width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px; }
+.revamp-table th { text-align:left; padding:10px 14px; background:var(--grey-50); border-bottom:2px solid var(--grey-200); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--grey-400); }
+.revamp-table td { padding:10px 14px; border-bottom:1px solid var(--grey-100); color:var(--grey-700); line-height:1.5; }
+.revamp-table tr:hover { background:var(--grey-50); }
+
+.revamp-email-block { padding:16px 20px; border-radius:10px; border:1px solid var(--grey-200); margin-bottom:14px; background:var(--white); }
+.revamp-email-block:last-child { margin-bottom:0; }
+.revamp-email-name { font-size:14px; font-weight:700; color:var(--dark); margin-bottom:4px; }
+.revamp-email-sub { font-size:12px; color:var(--grey-500); margin-bottom:10px; }
+.revamp-email-field { display:flex; gap:10px; margin-bottom:8px; font-size:13px; }
+.revamp-email-field-label { font-weight:700; color:var(--green); min-width:90px; flex-shrink:0; }
+.revamp-email-field-value { color:var(--grey-700); line-height:1.6; }
+.revamp-email-diff { margin-top:10px; padding:10px 14px; border-radius:8px; background:var(--green-light); border:1px solid rgba(16,185,129,0.12); font-size:12.5px; color:var(--grey-700); line-height:1.6; }
+.revamp-email-diff strong { color:var(--green); }
+
+.revamp-option { padding:14px 18px; border-radius:10px; border:1px solid var(--grey-200); margin-bottom:10px; }
+.revamp-option:last-child { margin-bottom:0; }
+.revamp-option-title { font-size:13px; font-weight:700; color:var(--dark); margin-bottom:6px; }
+.revamp-option-text { font-size:12.5px; color:var(--grey-600); line-height:1.6; }
+
+/* NEXT STEPS */
+.next-steps { background:var(--white); border-radius:var(--radius-lg); border:1px solid var(--grey-200); box-shadow:var(--shadow-sm); padding:28px 32px; margin-bottom:32px; }
+.next-steps-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.next-steps-icon { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#3b82f6,#1e40af); display:flex; align-items:center; justify-content:center; font-size:16px; }
+.next-steps-title { font-size:16px; font-weight:700; color:var(--dark); }
+.next-steps-sub { font-size:12px; color:var(--grey-500); margin-top:2px; }
+.next-steps-flow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.next-step { flex:1; padding:16px 18px; background:var(--grey-50); border:1px solid var(--grey-200); position:relative; text-align:center; border-radius:10px; }
+.next-step-num { font-size:10px; font-weight:800; color:var(--white); width:20px; height:20px; border-radius:6px; background:var(--blue); display:inline-flex; align-items:center; justify-content:center; margin-bottom:8px; }
+.next-step-name { font-size:12px; font-weight:700; color:var(--dark); line-height:1.3; }
+.next-step-desc { font-size:11px; color:var(--grey-500); margin-top:4px; line-height:1.4; }
+.next-step.active-step { background:var(--blue-light); border-color:rgba(59,130,246,0.3); }
+.next-step.active-step .next-step-num { background:var(--blue); }
+.next-step-arrow { position:absolute; right:-8px; top:50%; transform:translateY(-50%); font-size:14px; color:var(--grey-300); font-weight:700; z-index:2; }
+
+/* RESPONSIVE */
+@media(max-width:768px) {
+  .header { padding:16px 20px; }
+  .header-inner { flex-direction:column; align-items:flex-start; gap:12px; }
+  .main { padding:20px 16px 60px; }
+  .journey { padding:20px 16px; }
+  .journey-flow { gap:8px; }
+  .journey-row { flex-wrap:wrap; gap:8px; }
+  .journey-row .j-node { flex:1 1 45%; min-width:0; }
+  .email-body { padding:16px 20px; }
+  .email-header { padding:16px 20px; flex-direction:column; align-items:flex-start; gap:8px; }
+  .field-row { flex-direction:column; gap:4px; }
+  .field-label { min-width:auto; }
+  .findings-grid-2, .findings-grid-3 { grid-template-columns:1fr; }
+  .findings-section { padding:20px 16px 0; }
+  .findings-summary { margin:20px 16px 20px; }
+  .findings-tabs { flex-wrap:wrap; }
+  .findings-tab { flex:1 1 30%; }
+  .revamp-inner { margin:12px 16px; }
+  .revamp-inner-content { padding:16px; }
+  .revamp-compare { grid-template-columns:1fr; }
+  .revamp-table { font-size:12px; }
+  .revamp-table th, .revamp-table td { padding:8px 10px; }
+  .next-steps { padding:20px 16px; }
+  .next-steps-flow { grid-template-columns:1fr 1fr; }
+  .next-step { flex:none; border-radius:10px !important; }
+  .next-step-arrow { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <h1>Retail-to-IB EDM Journey — Audit & Revamp Proposal</h1>
+      <p>Current Journey: D0 → D1 → D3 → D5 → D7 · 5 Emails · 3 Missing Days (D2, D4, D6)</p>
+    </div>
+    <div class="header-right">
+      <span class="header-badge badge-current">● Current</span>
+      <span class="header-badge badge-finding">● Findings</span>
+      <span class="header-badge badge-revamp">● Revamp</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- JOURNEY FLOW -->
+<div class="journey">
+  <div class="journey-title">Current Drip Journey Flow — Retail to IB</div>
+  <div class="journey-flow">
+    <div class="journey-row">
+      <div class="j-node active has-arrow-right">
+        <div class="j-tooltip tip-bottom">Day 0 — Introduction email. Subject: "Elevate Your Earnings as a TMGM Introducing Broker." Explains what an IB is with a 3-step process. CTA: "BECOME AN IB TODAY."</div>
+        <div class="j-num">D0</div>
+        <div class="j-name">What is an IB?</div>
+        <div class="j-trigger">Awareness</div>
+      </div>
+      <div class="j-node active has-arrow-right">
+        <div class="j-tooltip tip-bottom">Day 1 — Subject: "Here's Why YOU Should Be a TMGM Introducing Broker!" Lists 5 perks of being a TMGM IB. Includes NPS survey. CTA: "Find Out More."</div>
+        <div class="j-num">D1</div>
+        <div class="j-name">5 Perks of TMGM IB</div>
+        <div class="j-trigger">Why TMGM</div>
+      </div>
+      <div class="j-node missing has-arrow-right">
+        <div class="j-tooltip tip-bottom">Day 2 — No email exists in the current journey.</div>
+        <div class="j-num">D2</div>
+        <div class="j-name">MISSING</div>
+        <div class="j-trigger">No email</div>
+      </div>
+      <div class="j-node active">
+        <div class="j-tooltip tip-bottom">Day 3 — Subject: "How to Succeed as an Introducing Broker with TMGM." Tips on succeeding as an IB. Highlights IB Portal, Creative Materials, Global Support. CTA: "JOIN NOW."</div>
+        <div class="j-num">D3</div>
+        <div class="j-name">How to Succeed</div>
+        <div class="j-trigger">Enablement</div>
+      </div>
+    </div>
+    <div class="journey-row">
+      <div class="j-node missing has-arrow-right">
+        <div class="j-tooltip">Day 4 — No email exists in the current journey.</div>
+        <div class="j-num">D4</div>
+        <div class="j-name">MISSING</div>
+        <div class="j-trigger">No email</div>
+      </div>
+      <div class="j-node active has-arrow-right">
+        <div class="j-tooltip">Day 5 — Subject: "Introducing Broker vs Finfluncer - What is the Difference?" Compares IB and Finfluencer paths. Introduces Finfluencer program ($100 advance). CTA: "Learn More" + "Become a Finfluencer Today!"</div>
+        <div class="j-num">D5</div>
+        <div class="j-name">IB vs Finfluencer</div>
+        <div class="j-trigger">Comparison</div>
+      </div>
+      <div class="j-node missing has-arrow-right">
+        <div class="j-tooltip">Day 6 — No email exists in the current journey.</div>
+        <div class="j-num">D6</div>
+        <div class="j-name">MISSING</div>
+        <div class="j-trigger">No email</div>
+      </div>
+      <div class="j-node active">
+        <div class="j-tooltip">Day 7 — Subject: "Join Our Introducing Broker Program." Final email. 3-step process to join the IB program. CTA: "Learn More."</div>
+        <div class="j-num">D7</div>
+        <div class="j-name">How to Join</div>
+        <div class="j-trigger">Recap / Close</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Next sections will go here -->
+
+<!-- EMAIL D0 -->
+<div id="email-d0" class="email-card">
+  <div class="email-header" onclick="toggleCard(this)">
+    <div class="email-header-left">
+      <div class="email-num current">D0</div>
+      <div class="email-meta">
+        <h2>D0 — What is an Introducing Broker?</h2>
+        <div class="trigger">Day 0 · Awareness · First email in the journey</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="type-badge badge-current">Current</span>
+      <span class="expand-hint">Click to expand</span>
+      <div class="email-toggle"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+    </div>
+  </div>
+  <div class="email-collapsible">
+    <div class="email-body">
+      <div class="field"><div class="field-row"><span class="field-label">Email Subject</span><span class="field-value subject">Elevate Your Earnings as a TMGM Introducing Broker</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Day</span><span class="field-value">Day 0 — Sent immediately upon entering the journey</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Objective</span><span class="field-value">Introduce the IB concept to existing retail traders and encourage them to sign up</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">CTA</span><span class="field-value">BECOME AN IB TODAY</span></div></div>
+      <div class="email-preview">
+        <div class="banner">Earn as a TMGM Introducing Broker</div>
+        <div class="salutation">Dear %%First_Name%%,</div>
+        <div class="content-block">At TMGM, we're always looking for ways to enhance your trading journey. Our Introducing Broker (IB) program is designed to help you connect potential traders with TMGM—while you earn commissions based on their trading activity.</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">What is an Introducing Broker?</div>
+        <div class="content-block">An Introducing Broker is a trusted partner who refers clients to TMGM. In return, you receive commissions from the trading activity of those you refer. This partnership not only broadens your network but also offers a straightforward way to boost your income.</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">How does it work?</div>
+        <div class="content-block">1. A friend or colleague is interested in trading but hasn't chosen a broker yet.
+2. You recommend TMGM using your unique IB referral link.
+3. When they start trading, you earn a commission based on their activity.</div>
+        <div class="content-block">Our IB program might be the perfect fit if you want to leverage your network and elevate your earnings without the hassle.
+
+Join the TMGM IB Program Today!</div>
+      </div>
+      <div class="copy-all">
+        <a href="#" onclick="viewImage('https://raw.githubusercontent.com/tmgm5258/retailtoibedm/33f93ba4785195db7162c04afacb0c288500e88c/D0.png','D0 — What is an IB');return false;" class="copy-all-btn">🖼 View Full EDM Layout</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL D1 -->
+<div id="email-d1" class="email-card">
+  <div class="email-header" onclick="toggleCard(this)">
+    <div class="email-header-left">
+      <div class="email-num current">D1</div>
+      <div class="email-meta">
+        <h2>D1 — 5 Perks of Being a TMGM Introducing Broker</h2>
+        <div class="trigger">Day 1 · Why TMGM · Includes NPS survey</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="type-badge badge-current">Current</span>
+      <span class="expand-hint">Click to expand</span>
+      <div class="email-toggle"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+    </div>
+  </div>
+  <div class="email-collapsible">
+    <div class="email-body">
+      <div class="field"><div class="field-row"><span class="field-label">Email Subject</span><span class="field-value subject">Here's Why YOU Should Be a TMGM Introducing Broker!</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Day</span><span class="field-value">Day 1 — Sent 1 day after D0</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Objective</span><span class="field-value">Sell the benefits of becoming a TMGM IB with 5 key perks</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">CTA</span><span class="field-value">Find Out More</span></div></div>
+      <div class="email-preview">
+        <div class="banner">Why You Should Partner with TMGM</div>
+        <div class="salutation">Dear %%First_Name%%,</div>
+        <div class="content-block">Trading can be unpredictable—full of ups, downs, and surprises. What if you could generate a steady income stream without taking on extra risk? That's where our TMGM Introducing Broker (IB) program comes in.
+
+Check out these 5 perks of becoming a TMGM IB:</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">5 Perks of being a TMGM Introducing Broker</div>
+        <div class="content-block">1. Earn Passive Income
+Receive daily commissions based on your clients' trading activity. The more they trade, the more you earn—effortlessly.
+
+2. Low Barrier to Entry
+Signing up is simple. With no extensive requirements, you can quickly start referring traders and earning rewards.
+
+3. Marketing Resources
+Access a suite of professionally designed promotional materials—banners, videos, posters, and more—to help boost client sign-ups.
+
+4. Competitive Payouts
+Enjoy some of the industry's most attractive rebates, with full control over your commissions and flexible withdrawal options.
+
+5. Premium Account Management
+Benefit from personalized support from a dedicated account manager ready to help you optimize your strategy and grow your referrals.</div>
+        <div class="content-block">Ready to take your trading journey to the next level? Join our TMGM IB program today and unlock your earning potential!</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">Your Feedback Is Important To Us</div>
+        <div class="content-block">How Likely is It That You Would Recommend TMGM to a Friend or a Colleague?
+[0 — Not at all likely] ........................ [10 — Extremely Likely]</div>
+      </div>
+      <div class="copy-all">
+        <a href="#" onclick="viewImage('https://raw.githubusercontent.com/tmgm5258/retailtoibedm/1591799213735fcd232d1cc2734169d6cdb14278/D1.png','D1 — 5 Perks of TMGM IB');return false;" class="copy-all-btn">🖼 View Full EDM Layout</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL D3 -->
+<div id="email-d3" class="email-card">
+  <div class="email-header" onclick="toggleCard(this)">
+    <div class="email-header-left">
+      <div class="email-num current">D3</div>
+      <div class="email-meta">
+        <h2>D3 — How to Succeed as an Introducing Broker</h2>
+        <div class="trigger">Day 3 · Enablement · Includes NPS survey</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="type-badge badge-current">Current</span>
+      <span class="expand-hint">Click to expand</span>
+      <div class="email-toggle"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+    </div>
+  </div>
+  <div class="email-collapsible">
+    <div class="email-body">
+      <div class="field"><div class="field-row"><span class="field-label">Email Subject</span><span class="field-value subject">How to Succeed as an Introducing Broker with TMGM</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Day</span><span class="field-value">Day 3 — Sent 3 days after D0 (D2 is missing)</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Objective</span><span class="field-value">Build confidence by showing how to succeed as an IB and highlighting available resources</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">CTA</span><span class="field-value">JOIN NOW</span></div></div>
+      <div class="email-preview">
+        <div class="banner">Succeed as an Introducing Broker</div>
+        <div class="salutation">Dear %%First_Name%%,</div>
+        <div class="content-block">Excelling as an Introducing Broker in the competitive forex market can be challenging—but with the right approach and support, you can truly stand out. Here are some expert tips to help you succeed:</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">Ways to Become a Better Introducing Broker</div>
+        <div class="content-block" style="font-weight:700;">Understanding Your Role</div>
+        <div class="content-block">As an Introducing Broker, you are the essential link between traders and TMGM. By referring clients to our platform, you open the door to consistent earning potential through volume-based rebates on every trade.</div>
+        <div class="content-block" style="font-weight:700;">Leverage Our Resources</div>
+        <div class="content-block">We're committed to your success. That's why we provide:
+
+1. IB Portal
+Easily track and analyse your performance via a single dashboard.
+
+2. Creative Materials
+Access a range of promotional tools — from banners to mailers — that drive client sign-ups.
+
+3. Global Support
+Our dedicated team is always available to answer any questions and guide your operations.</div>
+        <div class="content-block">We're excited to invite you to join our TMGM IB Program.
+
+Experience the benefits of our comprehensive platform, resources, and dedicated support. Start building a successful IB business with TMGM today!</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">Your Feedback Is Important To Us</div>
+        <div class="content-block">How Likely is It That You Would Recommend TMGM to a Friend or a Colleague?
+[0 — Not at all likely] ........................ [10 — Extremely Likely]</div>
+      </div>
+      <div class="copy-all">
+        <a href="#" onclick="viewImage('https://raw.githubusercontent.com/tmgm5258/retailtoibedm/6ebdce253b8f0b402c1e1f918c00a9c11c0f8741/D3.png','D3 — How to Succeed as an IB');return false;" class="copy-all-btn">🖼 View Full EDM Layout</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL D5 -->
+<div id="email-d5" class="email-card">
+  <div class="email-header" onclick="toggleCard(this)">
+    <div class="email-header-left">
+      <div class="email-num current">D5</div>
+      <div class="email-meta">
+        <h2>D5 — Introducing Broker vs Finfluencer</h2>
+        <div class="trigger">Day 5 · Comparison · Includes NPS survey · Typo in subject line</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="type-badge badge-current">Current</span>
+      <span class="expand-hint">Click to expand</span>
+      <div class="email-toggle"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+    </div>
+  </div>
+  <div class="email-collapsible">
+    <div class="email-body">
+      <div class="field"><div class="field-row"><span class="field-label">Email Subject</span><span class="field-value subject">Introducing Broker vs Finfluncer - What is the Difference?</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Day</span><span class="field-value">Day 5 — Sent 5 days after D0 (D4 is missing)</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Objective</span><span class="field-value">Compare IB and Finfluencer paths, introduce TMGM's Finfluencer program as an alternative</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">CTA</span><span class="field-value">LEARN MORE + Become a Finfluencer Today!</span></div></div>
+      <div class="email-preview">
+        <div class="banner">Introducing Broker vs Finfluencer</div>
+        <div class="salutation">Dear %%First_Name%%,</div>
+        <div class="content-block">In finance trading, IB programs have long been a trusted way to earn commissions by referring clients to brokerages. Today, however, the rise of social media has given birth to Finfluencers—financial influencers who build engaged audiences through compelling content and monetize via affiliate links.</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">What is the difference?</div>
+        <div class="content-block" style="font-weight:700;">Introducing Broker (IB):</div>
+        <div class="content-block">Partners with a brokerage, earn commissions based on the trading activity of the clients they refer.</div>
+        <div class="content-block" style="font-weight:700;">Finfluencer:</div>
+        <div class="content-block">Leverages social media to create compelling financial content, build an audience, and earn revenue through affiliate partnerships.</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">TMGM's Special Finfluencer Program</div>
+        <div class="content-block">We're excited to announce our new Finfluencer program! Receive a $100 advance to create and publish content about TMGM, and earn extra rebates when your unique referral link drives sign-ups.</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">Your Feedback Is Important To Us</div>
+        <div class="content-block">How Likely is It That You Would Recommend TMGM to a Friend or a Colleague?
+[0 — Not at all likely] ........................ [10 — Extremely Likely]</div>
+      </div>
+      <div class="copy-all">
+        <a href="#" onclick="viewImage('https://raw.githubusercontent.com/tmgm5258/retailtoibedm/b203b8e69695fa21bce7097c783f321613509328/D5.png','D5 — IB vs Finfluencer');return false;" class="copy-all-btn">🖼 View Full EDM Layout</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL D7 -->
+<div id="email-d7" class="email-card">
+  <div class="email-header" onclick="toggleCard(this)">
+    <div class="email-header-left">
+      <div class="email-num current">D7</div>
+      <div class="email-meta">
+        <h2>D7 — Join Our Introducing Broker Program</h2>
+        <div class="trigger">Day 7 · Recap / Close · Final email in the journey</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="type-badge badge-current">Current</span>
+      <span class="expand-hint">Click to expand</span>
+      <div class="email-toggle"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+    </div>
+  </div>
+  <div class="email-collapsible">
+    <div class="email-body">
+      <div class="field"><div class="field-row"><span class="field-label">Email Subject</span><span class="field-value subject">Join Our Introducing Broker Program</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Day</span><span class="field-value">Day 7 — Sent 7 days after D0 (D6 is missing)</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">Objective</span><span class="field-value">Final push to convert — recap the sign-up process with a simplified 3-step flow</span></div></div>
+      <div class="field"><div class="field-row"><span class="field-label">CTA</span><span class="field-value">Learn More</span></div></div>
+      <div class="email-preview">
+        <div class="banner">Ready to be an Introducing Broker?</div>
+        <div class="salutation">Dear %%First_Name%%,</div>
+        <div class="content-block">Are you interested in exploring a role as an Introducing Broker (IB) with TMGM? Our program offers a clear, step-by-step process to help you connect with potential clients and participate in our partnership ecosystem.</div>
+        <div class="content-block" style="font-weight:700; font-size:16px; color:var(--dark);">How to Join Our Program?</div>
+        <div class="content-block">1. Select your program
+Visit our Partnership Site and select the program that best suits your needs.
+
+2. Refer
+Begin referring using your unique tracking link, and leverage our high-conversion landing pages and banners to drive sign-ups.
+
+3. Start Earning
+As your clients start trading, you will receive commissions based on our program structure.</div>
+        <div class="content-block">If you're interested in how our IB program can benefit you, visit our website to explore everything we offer.
+
+We're here to answer your questions and help you get started.</div>
+      </div>
+      <div class="copy-all">
+        <a href="#" onclick="viewImage('https://raw.githubusercontent.com/tmgm5258/retailtoibedm/1df00246cf47f4542f0f2227cf578f436bd60e1d/D7.png','D7 — Join Our IB Program');return false;" class="copy-all-btn">🖼 View Full EDM Layout</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FINDINGS / AUDIT SUMMARY -->
+<div id="findings" class="findings-card">
+  <div class="findings-header" onclick="this.closest('.findings-card').classList.toggle('expanded')">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:16px;">🔍</div>
+      <div>
+        <h2 style="font-size:16px;font-weight:700;color:var(--dark);margin:0;">Audit Findings — Key Issues Identified</h2>
+        <div style="font-size:12px;color:var(--grey-500);margin-top:2px;">6 categories · 15 issues across the current D0–D7 journey</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="expand-hint">Click to expand</span>
+      <div class="email-toggle"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+    </div>
+  </div>
+  <div class="findings-body">
+
+    <!-- TABS -->
+    <div class="findings-tabs">
+      <button class="findings-tab active" onclick="switchFindings(this,'findings-tab','structure')">Journey Structure</button>
+      <button class="findings-tab" onclick="switchFindings(this,'findings-tab','subjects')">Subject Lines</button>
+      <button class="findings-tab" onclick="switchFindings(this,'findings-tab','content')">Content & Messaging</button>
+      <button class="findings-tab" onclick="switchFindings(this,'findings-tab','cta')">CTA Strategy</button>
+      <button class="findings-tab" onclick="switchFindings(this,'findings-tab','nps')">NPS Survey</button>
+      <button class="findings-tab" onclick="switchFindings(this,'findings-tab','d5crisis')">D5 Identity Crisis</button>
+    </div>
+
+    <!-- TAB 1: JOURNEY STRUCTURE -->
+    <div id="findings-tab-structure" class="findings-content active">
+      <div class="findings-section">
+        <div class="findings-grid findings-grid-3">
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">⚠</div>
+              <div class="findings-item-name">3 Missing Days</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">D2, D4, and D6 have no emails. The journey goes from daily contact (D0→D1) to every-other-day (D3, D5, D7), breaking momentum and losing the reader's attention between touchpoints.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">D2 D4 D6</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">🔄</div>
+              <div class="findings-item-name">D0 and D7 Are the Same Email</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">Both emails explain "what is an IB" and show a 3-step process to join. A reader who wasn't convinced on Day 0 sees the same message repackaged on Day 7 with no new motivation to act.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">D0 D7</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--amber);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--amber);">📉</div>
+              <div class="findings-item-name">Flat Emotional Arc</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">Every email has the same energy — informational, polite, brochure-like. There is no build-up, no peak moment, no urgency crescendo. D7 feels the same as D0.</div>
+              <div class="findings-item-tags"><span class="findings-tag medium">Medium Priority</span><span class="findings-tag medium">All Emails</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SUBJECT LINES -->
+    <div id="findings-tab-subjects" class="findings-content">
+      <div class="findings-section">
+        <div class="findings-grid findings-grid-2">
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">✉</div>
+              <div class="findings-item-name">All 5 Subject Lines Say "Introducing Broker"</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">Every subject line explicitly mentions "Introducing Broker." In a reader's inbox, D0 through D7 all blur together — no curiosity hooks, no numbers, no personalisation, no variety. They read like the same email with words rearranged.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">All Emails</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">🔤</div>
+              <div class="findings-item-name">Typo in D5 Subject Line</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">"Finfluncer" instead of "Finfluencer" in the D5 subject line. This is a credibility issue — the email is asking someone to trust TMGM as a business partner while the subject line has a spelling error.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">D5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CONTENT & MESSAGING -->
+    <div id="findings-tab-content" class="findings-content">
+      <div class="findings-section">
+        <div class="findings-grid findings-grid-3" style="gap:16px;">
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">💰</div>
+              <div class="findings-item-name">Zero Commission Numbers</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">Across 5 emails over 7 days, not a single commission figure is mentioned. No "$8–$11 per lot," no "daily payouts," no earning scenario. The reader has no idea how much they could actually earn.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">All Emails</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">👤</div>
+              <div class="findings-item-name">No Social Proof</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">No testimonials, no success stories, no "X traders have already become IBs." Nothing that shows real people succeeding as TMGM IBs to build trust and credibility.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">All Emails</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--amber);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--amber);">⏰</div>
+              <div class="findings-item-name">No Urgency or Incentive</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">Nothing is time-sensitive. No limited-time onboarding bonus, no "first 50 IBs get enhanced rates," no reason to act today vs. next month. The same offer exists forever.</div>
+              <div class="findings-item-tags"><span class="findings-tag medium">Medium Priority</span><span class="findings-tag medium">All Emails</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--amber);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--amber);">📋</div>
+              <div class="findings-item-name">Generic Perks — Not Unique to TMGM</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">D1's 5 perks (passive income, low barrier, marketing resources, competitive payouts, account manager) are what every broker claims. No mention of TMGM's actual differentiators — daily payouts, PAMM/MAM, Sub-IB structure, or Chelsea FC.</div>
+              <div class="findings-item-tags"><span class="findings-tag medium">Medium Priority</span><span class="findings-tag medium">D1</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--amber);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--amber);">🎯</div>
+              <div class="findings-item-name">D3 Assumes Reader Is Already an IB</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">D3's copy says "Excelling as an Introducing Broker" and "Ways to Become a Better Introducing Broker." But the reader hasn't signed up yet — the messaging has jumped ahead of where they are in their decision.</div>
+              <div class="findings-item-tags"><span class="findings-tag medium">Medium Priority</span><span class="findings-tag medium">D3</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--amber);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--amber);">🖼</div>
+              <div class="findings-item-name">Generic Stock Imagery</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">The same young-man-in-business-casual stock photo style across all emails. Everything blurs together visually — no differentiation between emails, not aspirational or relatable to a retail trader.</div>
+              <div class="findings-item-tags"><span class="findings-tag low">Low Priority</span><span class="findings-tag low">All Emails</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: CTA STRATEGY -->
+    <div id="findings-tab-cta" class="findings-content">
+      <div class="findings-section">
+        <div class="findings-grid findings-grid-2">
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">🔘</div>
+              <div class="findings-item-name">Weak & Inconsistent CTAs</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">The CTAs across the journey: "BECOME AN IB TODAY" → "Find Out More" → "JOIN NOW" → "Learn More" / "Become a Finfluencer" → "Learn More." The final email uses the weakest CTA ("Learn More") when it should be the strongest closing push.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">All Emails</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--amber);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--amber);">⬇</div>
+              <div class="findings-item-name">CTAs Buried at the Bottom</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">Most emails place the CTA only at the very end. The reader has to scroll through all the educational content before they can act. No early or mid-email CTA to catch readers who are already convinced.</div>
+              <div class="findings-item-tags"><span class="findings-tag medium">Medium Priority</span><span class="findings-tag medium">D0 D1 D7</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: NPS SURVEY -->
+    <div id="findings-tab-nps" class="findings-content">
+      <div class="findings-section">
+        <div class="findings-grid findings-grid-2">
+          <div class="findings-item" style="border-top:3px solid var(--amber);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--amber);">📊</div>
+              <div class="findings-item-name">NPS Appears 3 Times in 5 Emails</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">The same NPS survey block ("How Likely is It That You Would Recommend TMGM…") appears in D1, D3, and D5. By the third time, it becomes background noise. It also splits each email's purpose between conversion and feedback collection.</div>
+              <div class="findings-item-tags"><span class="findings-tag medium">Medium Priority</span><span class="findings-tag medium">D1 D3 D5</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--amber);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--amber);">🎯</div>
+              <div class="findings-item-name">Competing Goals Per Email</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">Each email with NPS is trying to do two things: convert the reader to IB AND collect satisfaction feedback. These are different objectives that compete for the reader's attention and dilute the conversion goal.</div>
+              <div class="findings-item-tags"><span class="findings-tag medium">Medium Priority</span><span class="findings-tag medium">D1 D3 D5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: D5 IDENTITY CRISIS -->
+    <div id="findings-tab-d5crisis" class="findings-content">
+      <div class="findings-section">
+        <div class="findings-grid findings-grid-2">
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">🔀</div>
+              <div class="findings-item-name">Finfluencer Introduced Mid-Journey</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">D0, D1, and D3 all push IB. Then D5 suddenly introduces a completely different program (Finfluencer). A reader warming up to the IB idea now faces: "Should I be an IB or a Finfluencer?" Without guidance, this stalls decision-making.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">D5</span></div>
+            </div>
+          </div>
+          <div class="findings-item" style="border-top:3px solid var(--red);">
+            <div class="findings-item-top">
+              <div class="findings-icon" style="background:var(--red);">↔</div>
+              <div class="findings-item-name">Two Competing CTAs in One Email</div>
+            </div>
+            <div class="findings-item-body">
+              <div class="findings-item-text">"LEARN MORE" (for IB) and "Become a Finfluencer Today!" (for Finfluencer) pull the reader in two directions. No guidance on which path suits them. The email doesn't help the reader decide — it just presents two options and hopes for the best.</div>
+              <div class="findings-item-tags"><span class="findings-tag high">High Priority</span><span class="findings-tag high">D5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM LINE — always visible -->
+    <div class="findings-summary">
+      <div class="findings-summary-title">⚡ Bottom Line</div>
+      <div class="findings-summary-text">The journey explains but never persuades. Across 5 emails over 7 days, the reader learns what an IB is, why TMGM is good, how to succeed, the difference between IB and Finfluencer, and how to join — but they are never given a single concrete, number-driven reason to act today. The journey educates like a brochure but doesn't sell like a conversion funnel.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REVAMP PROPOSAL -->
+<div id="revamp" class="revamp-card">
+  <div class="revamp-header" onclick="this.closest('.revamp-card').classList.toggle('expanded')">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:16px;">🚀</div>
+      <div>
+        <h2 style="font-size:16px;font-weight:700;color:var(--dark);margin:0;">Revamp Proposal — Retail-to-IB EDM Journey</h2>
+        <div style="font-size:12px;color:var(--grey-500);margin-top:2px;">8 sections · New structure, messaging, CTAs, and strategy</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="expand-hint">Click to expand</span>
+      <div class="email-toggle"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+    </div>
+  </div>
+  <div class="revamp-body">
+
+    <!-- INNER 1: NEW JOURNEY PHILOSOPHY -->
+    <div class="revamp-inner">
+      <div class="revamp-inner-header" onclick="this.closest('.revamp-inner').classList.toggle('expanded')">
+        <div class="revamp-inner-header-left">
+          <div class="revamp-inner-num">1</div>
+          <div class="revamp-inner-title">New Journey Philosophy</div>
+        </div>
+        <div class="revamp-inner-toggle"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+      <div class="revamp-inner-body">
+        <div class="revamp-inner-content">
+          <div class="revamp-compare">
+            <div class="revamp-compare-box old">
+              <div class="revamp-compare-title">Current Journey</div>
+              <div class="revamp-compare-text">Educates → Educates → Educates → Confuses → Repeats</div>
+            </div>
+            <div class="revamp-compare-box new">
+              <div class="revamp-compare-title">Proposed Journey</div>
+              <div class="revamp-compare-text">Hooks with money → Proves it works → Removes objections → Creates urgency → Closes hard</div>
+            </div>
+          </div>
+          <div class="revamp-text">The shift is from <strong>"here's what an IB is"</strong> (brochure mode) to <strong>"here's how much you could earn"</strong> (sales mode). Every email should answer the reader's real question: <strong>"What's in it for me, and why should I do this now?"</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INNER 2: PROPOSED NEW STRUCTURE -->
+    <div class="revamp-inner">
+      <div class="revamp-inner-header" onclick="this.closest('.revamp-inner').classList.toggle('expanded')">
+        <div class="revamp-inner-header-left">
+          <div class="revamp-inner-num">2</div>
+          <div class="revamp-inner-title">Proposed New Structure — 5 Emails, 7 Days, Zero Gaps</div>
+        </div>
+        <div class="revamp-inner-toggle"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+      <div class="revamp-inner-body">
+        <div class="revamp-inner-content">
+          <table class="revamp-table">
+            <thead><tr><th>Email</th><th>Day</th><th>Angle</th><th>Psychology</th></tr></thead>
+            <tbody>
+              <tr><td><strong>E1</strong></td><td>Day 0</td><td>The Money Hook</td><td>Curiosity — lead with earnings, not education</td></tr>
+              <tr><td><strong>E2</strong></td><td>Day 2</td><td>Social Proof</td><td>Trust — show it works for real people</td></tr>
+              <tr><td><strong>E3</strong></td><td>Day 4</td><td>Objection Handling</td><td>Confidence — "it's easier than you think"</td></tr>
+              <tr><td><strong>E4</strong></td><td>Day 6</td><td>Urgency</td><td>Scarcity — reason to act NOW</td></tr>
+              <tr><td><strong>E5</strong></td><td>Day 7</td><td>Final Close</td><td>Decision — short, direct, last chance</td></tr>
+            </tbody>
+          </table>
+          <div class="revamp-text"><strong>Why this spacing:</strong> D0, D2, D4, D6, D7. Every-other-day cadence keeps momentum without feeling spammy. The final two emails (D6 → D7) land back-to-back for a closing one-two punch.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INNER 3: EMAIL-BY-EMAIL BREAKDOWN -->
+    <div class="revamp-inner">
+      <div class="revamp-inner-header" onclick="this.closest('.revamp-inner').classList.toggle('expanded')">
+        <div class="revamp-inner-header-left">
+          <div class="revamp-inner-num">3</div>
+          <div class="revamp-inner-title">Email-by-Email Breakdown</div>
+        </div>
+        <div class="revamp-inner-toggle"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+      <div class="revamp-inner-body">
+        <div class="revamp-inner-content">
+
+          <!-- E1 -->
+          <div class="revamp-email-block">
+            <div class="revamp-email-name">E1 — Day 0: The Money Hook</div>
+            <div class="revamp-email-sub">Subject line idea: "What would an extra $500/month look like?"</div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">Core Content</span><span class="revamp-email-field-value">Open with a specific earning scenario: "Refer 5 friends who each trade 20 lots/month → you earn $800–$1,100/month in commissions." State the numbers clearly: $8–$11 per lot, paid daily. Quick 3-step visual: Sign up → Share your link → Earn daily.</span></div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">CTA</span><span class="revamp-email-field-value">See How Much You Could Earn</span></div>
+            <div class="revamp-email-diff"><strong>What's different from current D0:</strong> Leads with money, not education. The reader immediately knows the financial upside before learning what an IB even is.</div>
+          </div>
+
+          <!-- E2 -->
+          <div class="revamp-email-block">
+            <div class="revamp-email-name">E2 — Day 2: Social Proof</div>
+            <div class="revamp-email-sub">Subject line idea: "They started just like you — now they earn daily"</div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">Core Content</span><span class="revamp-email-field-value">2–3 earning scenarios or anonymised IB profiles (e.g. "A trader in SEA referred 8 friends, now earns $600+/month passively"). Highlight TMGM's genuine differentiators: daily payouts (not weekly like XM), PAMM/MAM support, Sub-IB structure, dedicated account manager. Reinforce: "You're already trading with us — why not earn from your network too?"</span></div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">CTA</span><span class="revamp-email-field-value">Start Your IB Application</span></div>
+            <div class="revamp-email-diff"><strong>What's different:</strong> Replaces the generic "5 perks" (old D1) with proof that real people earn real money. Shows TMGM-specific advantages, not generic broker claims.</div>
+          </div>
+
+          <!-- E3 -->
+          <div class="revamp-email-block">
+            <div class="revamp-email-name">E3 — Day 4: Objection Handling</div>
+            <div class="revamp-email-sub">Subject line idea: "Think it's complicated? Here's what it actually takes"</div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">Core Content</span><span class="revamp-email-field-value">Address the top 3 objections: (1) "I don't have time" → It's passive income. Your referrals trade, you earn automatically. (2) "I don't know enough people" → You only need 3–5 active traders to start seeing meaningful income. (3) "I don't know how to promote" → TMGM gives you: IB Portal dashboard, ready-made banners and creative materials, personal tracking link, dedicated account manager.</span></div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">CTA</span><span class="revamp-email-field-value">Apply in 2 Minutes</span></div>
+            <div class="revamp-email-diff"><strong>What's different:</strong> Addresses real hesitations instead of assuming the reader has already decided. The resources (IB Portal, Creative Materials, Support) are presented as answers to doubts, not features of a program.</div>
+          </div>
+
+          <!-- E4 -->
+          <div class="revamp-email-block">
+            <div class="revamp-email-name">E4 — Day 6: Urgency</div>
+            <div class="revamp-email-sub">Subject line idea: "Your enhanced rate expires in 5 days" (Option A) or "%%First_Name%%, your spot is still open" (Option B)</div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">Option A</span><span class="revamp-email-field-value">If business can support an onboarding incentive — limited-time enhanced commission: e.g. "$12/lot for your first 90 days" (vs standard $8–$11). Or: "First 50 new IBs this month get a dedicated onboarding call + enhanced rate." Countdown language, deadline is real.</span></div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">Option B</span><span class="revamp-email-field-value">If no incentive available — recap the strongest points from E1–E3. "You've seen the numbers. You've seen the proof. The only thing left is to start." Frame as opportunity cost: "Every day you wait is a day your network is trading without earning you commissions."</span></div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">CTA</span><span class="revamp-email-field-value">"Lock In Your Rate" (Option A) or "Start Earning Today" (Option B)</span></div>
+            <div class="revamp-email-diff"><strong>What's different:</strong> Creates a reason to act NOW. Current journey has zero urgency across all 7 days.</div>
+          </div>
+
+          <!-- E5 -->
+          <div class="revamp-email-block">
+            <div class="revamp-email-name">E5 — Day 7: Final Close</div>
+            <div class="revamp-email-sub">Subject line idea: "%%First_Name%%, last reminder — then we'll stop asking"</div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">Core Content</span><span class="revamp-email-field-value">Short email. 3–4 sentences max. No more education. "We've shown you the numbers, the proof, and the tools. Now it's your call." Recap the single most compelling stat (e.g. "$8–$11 per lot, paid daily"). Acknowledge this is the last email: "This is the final email in this series. If you're interested, the door is open."</span></div>
+            <div class="revamp-email-field"><span class="revamp-email-field-label">CTA</span><span class="revamp-email-field-value">Apply Now</span></div>
+            <div class="revamp-email-diff"><strong>What's different from current D7:</strong> Doesn't repeat D0. It's a short, direct, respectful close — not another brochure. Acknowledging it's the last email is a pattern-break that actually increases clicks.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- INNER 4: SUBJECT LINE STRATEGY -->
+    <div class="revamp-inner">
+      <div class="revamp-inner-header" onclick="this.closest('.revamp-inner').classList.toggle('expanded')">
+        <div class="revamp-inner-header-left">
+          <div class="revamp-inner-num">4</div>
+          <div class="revamp-inner-title">Subject Line Strategy</div>
+        </div>
+        <div class="revamp-inner-toggle"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+      <div class="revamp-inner-body">
+        <div class="revamp-inner-content">
+          <div class="revamp-compare">
+            <div class="revamp-compare-box old">
+              <div class="revamp-compare-title">Current</div>
+              <div class="revamp-compare-text">All 5 subject lines say "Introducing Broker" — reader sees the same email 5 times in their inbox.</div>
+            </div>
+            <div class="revamp-compare-box new">
+              <div class="revamp-compare-title">Proposed</div>
+              <div class="revamp-compare-text">Each subject line uses a different psychological lever. None of them say "Introducing Broker."</div>
+            </div>
+          </div>
+          <table class="revamp-table">
+            <thead><tr><th>Email</th><th>Proposed Subject Line</th><th>Lever</th></tr></thead>
+            <tbody>
+              <tr><td><strong>E1</strong></td><td>What would an extra $500/month look like?</td><td>Curiosity + Number</td></tr>
+              <tr><td><strong>E2</strong></td><td>They started just like you — now they earn daily</td><td>Social proof</td></tr>
+              <tr><td><strong>E3</strong></td><td>Think it's complicated? Here's what it actually takes</td><td>Objection reversal</td></tr>
+              <tr><td><strong>E4</strong></td><td>Your enhanced rate expires in 5 days</td><td>Urgency + Scarcity</td></tr>
+              <tr><td><strong>E5</strong></td><td>%%First_Name%%, last reminder — then we'll stop asking</td><td>Personal + Finality</td></tr>
+            </tbody>
+          </table>
+          <div class="revamp-text">The reader doesn't need to know the industry term "Introducing Broker" — they need to know the benefit. The term can be explained inside the email, not in the subject line.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INNER 5: CTA ESCALATION -->
+    <div class="revamp-inner">
+      <div class="revamp-inner-header" onclick="this.closest('.revamp-inner').classList.toggle('expanded')">
+        <div class="revamp-inner-header-left">
+          <div class="revamp-inner-num">5</div>
+          <div class="revamp-inner-title">CTA Escalation Strategy</div>
+        </div>
+        <div class="revamp-inner-toggle"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+      <div class="revamp-inner-body">
+        <div class="revamp-inner-content">
+          <div class="revamp-compare">
+            <div class="revamp-compare-box old">
+              <div class="revamp-compare-title">Current</div>
+              <div class="revamp-compare-text">Starts strong ("BECOME AN IB TODAY") then weakens ("Find Out More" → "Learn More"). The final email has the weakest CTA.</div>
+            </div>
+            <div class="revamp-compare-box new">
+              <div class="revamp-compare-title">Proposed</div>
+              <div class="revamp-compare-text">Escalates from curiosity to commitment. Each CTA builds on the previous one, increasing in directness.</div>
+            </div>
+          </div>
+          <table class="revamp-table">
+            <thead><tr><th>Email</th><th>CTA</th><th>Intent</th></tr></thead>
+            <tbody>
+              <tr><td><strong>E1</strong></td><td>See How Much You Could Earn</td><td>Low commitment — just look</td></tr>
+              <tr><td><strong>E2</strong></td><td>Start Your IB Application</td><td>Medium commitment — begin</td></tr>
+              <tr><td><strong>E3</strong></td><td>Apply in 2 Minutes</td><td>Ease — it's quick</td></tr>
+              <tr><td><strong>E4</strong></td><td>Lock In Your Enhanced Rate</td><td>Urgency — act now</td></tr>
+              <tr><td><strong>E5</strong></td><td>Apply Now</td><td>Direct — last chance</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- INNER 6: WHAT GETS REMOVED -->
+    <div class="revamp-inner">
+      <div class="revamp-inner-header" onclick="this.closest('.revamp-inner').classList.toggle('expanded')">
+        <div class="revamp-inner-header-left">
+          <div class="revamp-inner-num">6</div>
+          <div class="revamp-inner-title">What Gets Removed</div>
+        </div>
+        <div class="revamp-inner-toggle"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+      <div class="revamp-inner-body">
+        <div class="revamp-inner-content">
+          <table class="revamp-table">
+            <thead><tr><th>Removed</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td><strong>NPS survey (D1, D3, D5)</strong></td><td>Belongs in a separate feedback flow, not a conversion journey. Splits the reader's attention between two competing goals.</td></tr>
+              <tr><td><strong>Finfluencer section (D5)</strong></td><td>Creates confusion mid-journey. Recommend: either a separate Finfluencer journey, or a one-line mention in E1 ("Not the IB type? Ask us about our Finfluencer program") with a link — not a full competing pitch.</td></tr>
+              <tr><td><strong>"What is an IB?" education (D0)</strong></td><td>Replace with earning-first messaging. Explain the concept through the money, not the other way around.</td></tr>
+              <tr><td><strong>Repeated 3-step "how to join" (D0 + D7)</strong></td><td>Show it once (E1), reference it briefly in the close (E5). Don't repeat the same content across two emails.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- INNER 7: WHAT GETS ADDED -->
+    <div class="revamp-inner">
+      <div class="revamp-inner-header" onclick="this.closest('.revamp-inner').classList.toggle('expanded')">
+        <div class="revamp-inner-header-left">
+          <div class="revamp-inner-num">7</div>
+          <div class="revamp-inner-title">What Gets Added</div>
+        </div>
+        <div class="revamp-inner-toggle"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+      <div class="revamp-inner-body">
+        <div class="revamp-inner-content">
+          <table class="revamp-table">
+            <thead><tr><th>Added</th><th>Where</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Specific commission numbers ($8–$11/lot)</strong></td><td>E1, E2, E5</td><td>The #1 missing element. Traders think in numbers.</td></tr>
+              <tr><td><strong>"Paid daily" highlight</strong></td><td>E1, E2</td><td>Genuine TMGM differentiator vs competitors (XM pays weekly, HFM bi-monthly).</td></tr>
+              <tr><td><strong>Earning scenarios / examples</strong></td><td>E1, E2</td><td>Shows the reader what's possible with their own network.</td></tr>
+              <tr><td><strong>Social proof</strong></td><td>E2</td><td>Builds trust through evidence, not claims.</td></tr>
+              <tr><td><strong>Objection handling</strong></td><td>E3</td><td>Addresses the real reasons people don't sign up.</td></tr>
+              <tr><td><strong>Urgency mechanism</strong></td><td>E4</td><td>Creates a reason to act today vs. next month.</td></tr>
+              <tr><td><strong>TMGM-specific differentiators</strong></td><td>E2</td><td>Daily payouts, PAMM/MAM, Sub-IB, Chelsea FC — things competitors don't have.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- INNER 8: THE FINFLUENCER QUESTION -->
+    <div class="revamp-inner">
+      <div class="revamp-inner-header" onclick="this.closest('.revamp-inner').classList.toggle('expanded')">
+        <div class="revamp-inner-header-left">
+          <div class="revamp-inner-num">8</div>
+          <div class="revamp-inner-title">The Finfluencer Question</div>
+        </div>
+        <div class="revamp-inner-toggle"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+      </div>
+      <div class="revamp-inner-body">
+        <div class="revamp-inner-content">
+          <div class="revamp-text"><strong>Recommendation:</strong> Remove Finfluencer from this journey entirely. The Retail-to-IB journey should stay focused on one conversion goal. Introducing a second option mid-funnel creates choice paralysis.</div>
+          <div class="revamp-text">Two alternative approaches:</div>
+          <div class="findings-grid findings-grid-2">
+            <div class="findings-item" style="border-top:3px solid var(--green);">
+              <div class="findings-item-top">
+                <div class="findings-icon" style="background:var(--green);">A</div>
+                <div class="findings-item-name">Separate Journey</div>
+              </div>
+              <div class="findings-item-body">
+                <div class="findings-item-text">Create a dedicated Finfluencer EDM journey targeting a different audience segment (content creators, social media traders). This gives the Finfluencer program its own space to shine without diluting the IB conversion funnel.</div>
+                <div class="findings-item-tags"><span class="findings-tag" style="background:var(--green-light);color:var(--green);">Recommended</span><span class="findings-tag" style="background:var(--green-light);color:var(--green);">Separate Flow</span></div>
+              </div>
+            </div>
+            <div class="findings-item" style="border-top:3px solid var(--blue);">
+              <div class="findings-item-top">
+                <div class="findings-icon" style="background:var(--blue);">B</div>
+                <div class="findings-item-name">One-Line Mention</div>
+              </div>
+              <div class="findings-item-body">
+                <div class="findings-item-text">Add a single line in E1: "More of a content creator? Ask us about our Finfluencer program →" with a link. One sentence, not a full email. Acknowledges the option without derailing the IB pitch.</div>
+                <div class="findings-item-tags"><span class="findings-tag" style="background:var(--blue-light);color:var(--blue);">Alternative</span><span class="findings-tag" style="background:var(--blue-light);color:var(--blue);">Minimal Disruption</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NEXT STEPS -->
+<div class="next-steps">
+  <div class="next-steps-header">
+    <div class="next-steps-icon">📋</div>
+    <div>
+      <div class="next-steps-title">Next Steps</div>
+      <div class="next-steps-sub">Pending approval — proposed action plan</div>
+    </div>
+  </div>
+  <div class="next-steps-flow">
+    <div class="next-step active-step">
+      <div class="next-step-num">1</div>
+      <div class="next-step-name">Align on Revamp Direction</div>
+      <div class="next-step-desc">Review this proposal and confirm approach</div>
+    </div>
+    <div class="next-step">
+      <div class="next-step-num">2</div>
+      <div class="next-step-name">Write New Email Copy</div>
+      <div class="next-step-desc">Draft E1–E5 content based on approved strategy</div>
+    </div>
+    <div class="next-step">
+      <div class="next-step-num">3</div>
+      <div class="next-step-name">Brief Design Team</div>
+      <div class="next-step-desc">New visuals, imagery direction, and email templates</div>
+    </div>
+    <div class="next-step">
+      <div class="next-step-num">4</div>
+      <div class="next-step-name">Submit to Compliance</div>
+      <div class="next-step-desc">Get new EDM content approved before build</div>
+    </div>
+    <div class="next-step">
+      <div class="next-step-num">5</div>
+      <div class="next-step-name">Build EDM Campaign</div>
+      <div class="next-step-desc">Work with Sichen Zhang to build the journey</div>
+    </div>
+    <div class="next-step">
+      <div class="next-step-num">6</div>
+      <div class="next-step-name">QA & Launch</div>
+      <div class="next-step-desc">Test links, rendering, merge tags, then go live</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<script>
+function toggleCard(header) {
+  const card = header.closest('.email-card');
+  const wasExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.email-card.expanded').forEach(c => c.classList.remove('expanded'));
+  if (!wasExpanded) card.classList.add('expanded');
+}
+
+function viewImage(url, title) {
+  var w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html><head><title>' + title + '</title><style>body{margin:0;background:#1a1a1a;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;}img{max-width:100%;height:auto;}</style></head><body><img src="' + url + '" alt="' + title + '"></body></html>');
+  w.document.close();
+}
+
+function switchFindings(btn, prefix, tab) {
+  const card = btn.closest('.findings-card');
+  card.querySelectorAll('.findings-tab').forEach(t => t.classList.remove('active'));
+  card.querySelectorAll('.findings-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(prefix + '-' + tab).classList.add('active');
+}
+</script>
+
+</body>
+</html>
